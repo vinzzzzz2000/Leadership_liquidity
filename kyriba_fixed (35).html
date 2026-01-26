@@ -1,0 +1,1949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kyriba ARR - CORRECT Hierarchy</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0d2b2b;
+            padding: 10px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 10px;
+            z-index: 100;
+            position: relative;
+        }
+        
+        .header h1 {
+            font-size: 3.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #f5c518 0%, #4facfe 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            font-size: 1.3em;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 15px;
+        }
+        
+        .info-box {
+            background: rgba(245, 197, 24, 0.1);
+            padding: 15px 25px;
+            border-radius: 15px;
+            margin-top: 15px;
+            border: 2px solid rgba(245, 197, 24, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        #bubble-container {
+            width: 100%;
+            max-width: 1800px;
+            height: calc(100vh - 80px);
+            min-height: 400px;
+            position: relative;
+        }
+        
+        .bubble {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .bubble:hover {
+            filter: brightness(1.15) drop-shadow(0 0 20px currentColor);
+        }
+        
+        .bubble-label {
+            pointer-events: none;
+            text-anchor: middle;
+            font-weight: 700;
+            fill: white;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+        }
+        
+        .bubble-value {
+            pointer-events: none;
+            text-anchor: middle;
+            font-weight: 900;
+            fill: white;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+        }
+        
+        .bubble-percentage {
+            pointer-events: none;
+            text-anchor: middle;
+            font-weight: 600;
+            fill: rgba(255, 255, 255, 0.85);
+            text-shadow: 0 2px 6px rgba(0,0,0,0.5);
+        }
+        
+        .flow-arrow {
+            stroke: rgba(255, 255, 255, 0.4);
+            stroke-width: 3;
+            fill: none;
+            stroke-dasharray: 5, 5;
+            animation: dash 20s linear infinite;
+        }
+        
+        @keyframes dash {
+            to {
+                stroke-dashoffset: -1000;
+            }
+        }
+        
+        .arrow-head {
+            fill: rgba(255, 255, 255, 0.6);
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.95);
+            color: white;
+            padding: 20px 25px;
+            border-radius: 15px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 14px;
+            line-height: 1.8;
+            max-width: 400px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.7);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+        
+        .tooltip-title {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .tooltip-value {
+            font-size: 26px;
+            font-weight: 900;
+            margin-bottom: 12px;
+            color: #667eea;
+        }
+        
+        .tooltip-desc {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.85);
+            line-height: 1.6;
+        }
+        
+        .legend-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 100;
+        }
+        
+        .legend {
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            font-size: 13px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            max-width: 300px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .legend-title {
+            font-size: 16px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            color: #667eea;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            flex-shrink: 0;
+        }
+        
+        .legend-label {
+            font-weight: 600;
+            font-size: 12px;
+        }
+        
+        .level-button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 700;
+            color: white;
+            background: rgba(255, 255, 255, 0.15);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .level-button:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .level-button.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: white;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.5);
+        }
+        
+        .microservice-card:hover, .ai-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 15px #e91e8c; }
+            50% { transform: scale(1.2); box-shadow: 0 0 25px #e91e8c, 0 0 40px rgba(233,30,140,0.5); }
+            100% { transform: scale(1); box-shadow: 0 0 15px #e91e8c; }
+        }
+        
+        /* TAM Tooltip hover */
+        .tam-button-wrapper:hover .tam-tooltip {
+            display: block !important;
+        }
+        
+        @media (max-width: 1024px) {
+            .legend-container {
+                position: relative;
+                bottom: auto;
+                right: auto;
+                margin-top: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1></h1>
+        
+        <!-- SINGLE COMPACT NAVIGATION BAR -->
+        <div style="display: flex; align-items: center; justify-content: center; gap: 15px; flex-wrap: wrap; padding: 8px 15px; background: rgba(0,0,0,0.3); border-radius: 30px; border: 1px solid rgba(255,255,255,0.15); margin: 10px 0;">
+            
+            <!-- Main Tabs -->
+            <button class="main-tab" data-tab="archeology" style="padding: 6px 14px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); background: transparent; border: 1px solid rgba(245,197,24,0.3); border-radius: 15px; cursor: pointer; transition: all 0.3s ease;">🏛️ History</button>
+            <button class="main-tab active" data-tab="today" style="padding: 6px 14px; font-size: 12px; font-weight: 600; color: white; background: linear-gradient(135deg, #f5c518 0%, #e91e8c 100%); border: none; border-radius: 15px; cursor: pointer; transition: all 0.3s ease;">📊 Today</button>
+            <button class="main-tab" data-tab="future" style="padding: 6px 14px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); background: transparent; border: 1px solid rgba(233,30,140,0.3); border-radius: 15px; cursor: pointer; transition: all 0.3s ease;">🚀 Future</button>
+            
+            <div style="width: 1px; height: 25px; background: rgba(255,255,255,0.2);"></div>
+            
+            <!-- Info -->
+            <span style="font-size: 11px; color: rgba(255,255,255,0.7);"><strong style="color: #f5c518;">TAM $6B</strong> → <strong style="color: #4facfe;">Kyriba $428M</strong> (7%)</span>
+            
+            <div style="width: 1px; height: 25px; background: rgba(255,255,255,0.2);"></div>
+            
+            <!-- Level Buttons (inline) -->
+            <div class="tam-button-wrapper" style="position: relative; display: inline-block;">
+                <button class="level-button" data-level="tam" style="background: rgba(79,172,254,0.2); border-color: #4facfe; font-size: 10px; padding: 4px 8px; border-radius: 10px;">🌍 TAM</button>
+                <div class="tam-tooltip" style="display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); width: 280px; padding: 10px; background: rgba(20,30,50,0.98); border: 2px solid #4facfe; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); z-index: 1000; margin-bottom: 6px; text-align: left;">
+                    <div style="font-size: 10px; font-weight: bold; color: #4facfe; margin-bottom: 5px;">📌 Sources</div>
+                    <ul style="font-size: 9px; color: rgba(255,255,255,0.85); line-height: 1.4; padding-left: 12px; margin: 0;">
+                        <li><strong>IDC MarketScape 2023:</strong> Kyriba = Leader</li>
+                        <li><strong>DataIntelo:</strong> ~$6.8B (2024)</li>
+                        <li><strong>ResearchAndMarkets:</strong> $6-13B</li>
+                    </ul>
+                    <div style="position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid #4facfe;"></div>
+                </div>
+            </div>
+            <button class="level-button" data-level="1" style="font-size: 10px; padding: 4px 8px; border-radius: 10px;">1</button>
+            <button class="level-button" data-level="2" style="font-size: 10px; padding: 4px 8px; border-radius: 10px;">2</button>
+            <button class="level-button" data-level="liquidity" style="font-size: 10px; padding: 4px 8px; border-radius: 10px;">3</button>
+            <button class="level-button" data-level="bankdata" style="font-size: 9px; padding: 3px 6px; border-radius: 8px; opacity: 0.7;">3.1</button>
+            <button class="level-button" data-level="aggregate" style="font-size: 9px; padding: 3px 6px; border-radius: 8px; opacity: 0.7;">3.2</button>
+            <button class="level-button" data-level="derive" style="font-size: 9px; padding: 3px 6px; border-radius: 8px; opacity: 0.7;">3.3</button>
+            <button class="level-button" data-level="execute" style="font-size: 9px; padding: 3px 6px; border-radius: 8px; opacity: 0.7;">3.4</button>
+        </div>
+        
+        <!-- Today's Business Content (empty - bubble chart below) -->
+        <div id="today-content"></div>
+        
+        <!-- Archeology Content (Hidden by default) -->
+        <div id="archeology-content" style="display: none;">
+            <div class="subtitle" style="font-size: 1.8em; color: #f5c518;">From TMS to the Liquidity Performance Platform</div>
+        </div>
+        
+        <!-- Future Content (Hidden by default) -->
+        <div id="future-content" style="display: none;">
+            <div class="subtitle" style="font-size: 1.8em; color: #e91e8c;">The Future of Treasury Intelligence <span style="font-size: 0.6em; color: rgba(255,255,255,0.5); font-weight: normal; font-style: italic;">(Draft for discussion)</span></div>
+        </div>
+    </div>
+    
+    <!-- Today's Business View -->
+    <div id="bubble-container"></div>
+    
+    <!-- Archeology View (Hidden by default) -->
+    <div id="archeology-view" style="display: none; width: 100%; max-width: 1800px; padding: 30px; background: linear-gradient(135deg, rgba(255,215,0,0.08) 0%, rgba(255,215,0,0.02) 100%); border-radius: 20px; border: 1px solid rgba(255,215,0,0.2);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px;">
+            <!-- Timeline Header -->
+            <div style="display: flex; width: 100%; position: relative;">
+                <div style="flex: 1; text-align: center; padding: 15px 20px; background: rgba(255,215,0,0.15); border-radius: 25px 0 0 25px; font-weight: bold; font-size: 16px; border: 1px solid rgba(255,215,0,0.3);">2000's - TMS</div>
+                <div style="flex: 1; text-align: center; padding: 15px 20px; background: rgba(255,215,0,0.2); font-weight: bold; font-size: 16px; border-top: 1px solid rgba(255,215,0,0.3); border-bottom: 1px solid rgba(255,215,0,0.3);">2010's - Unified TMS</div>
+                <div style="flex: 1.5; text-align: center; padding: 15px 20px; background: rgba(255,215,0,0.25); font-weight: bold; font-size: 16px; border-top: 1px solid rgba(255,215,0,0.3); border-bottom: 1px solid rgba(255,215,0,0.3);">2020's - Enterprise Liquidity Management</div>
+                <div style="flex: 1; text-align: center; padding: 15px 20px; background: linear-gradient(135deg, #c41e7f 0%, #e91e8c 100%); border-radius: 0 25px 25px 0; font-weight: bold; font-size: 16px;">2025 - Liquidity Performance</div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-bottom: 20px; font-size: 14px; color: rgba(255,255,255,0.5);">👆 Click on a circle to reveal details</div>
+        
+        <!-- Timeline Content -->
+        <div style="display: flex; gap: 30px; justify-content: space-between; align-items: flex-start;">
+            <!-- 2000's Column -->
+            <div style="flex: 1; text-align: center;">
+                <div class="era-circle" data-era="2000" style="width: 150px; height: 150px; margin: 0 auto 25px; border: 4px solid #f5c518; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-direction: column; background: rgba(245,197,24,0.1); cursor: pointer; transition: all 0.3s ease;">
+                    <div style="font-size: 40px;">💰</div>
+                    <div style="font-size: 11px; margin-top: 8px; font-weight: bold;">TREASURY<br>MANAGEMENT<br>SYSTEM</div>
+                </div>
+                <div class="era-content" data-era="2000" style="display: none; opacity: 0; transition: opacity 0.5s ease; text-align: left; padding: 0 10px;">
+                    <ul style="font-size: 15px; list-style: disc; padding-left: 20px; color: rgba(255,255,255,0.9); line-height: 2;">
+                        <li>Bank statement integration</li>
+                        <li style="color: #ffeb3b;">Cash management</li>
+                        <li>Payment hub</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- 2010's Column -->
+            <div style="flex: 1; text-align: center;">
+                <div class="era-circle" data-era="2010" style="width: 150px; height: 150px; margin: 0 auto 25px; border: 4px solid #f5c518; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-direction: column; background: radial-gradient(circle, rgba(245,197,24,0.15) 0%, transparent 70%); cursor: pointer; transition: all 0.3s ease;">
+                    <div style="font-size: 16px; font-weight: bold; color: #f5c518;">kyriba</div>
+                    <div style="font-size: 10px; margin-top: 5px;">ACTIVE LIQUIDITY<br>NETWORK</div>
+                </div>
+                <div class="era-content" data-era="2010" style="display: none; opacity: 0; transition: opacity 0.5s ease; text-align: left; padding: 0 10px;">
+                    <div style="display: flex; justify-content: center; font-size: 9px; margin-bottom: 15px; color: rgba(255,255,255,0.6); flex-wrap: wrap; gap: 8px;">
+                        <span>TREASURY MGMT</span>
+                        <span>PAYMENTS</span>
+                        <span>WORKING CAPITAL</span>
+                        <span>RISK MGMT</span>
+                    </div>
+                    <ul style="font-size: 15px; list-style: disc; padding-left: 20px; color: rgba(255,255,255,0.9); line-height: 2;">
+                        <li>Bank statement integration</li>
+                        <li style="color: #ffeb3b;">Cash management</li>
+                        <li style="color: #ffeb3b;">Advanced forecasting</li>
+                        <li>Payment hub</li>
+                        <li>Risk management</li>
+                        <li>Working capital</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- 2020's Column -->
+            <div style="flex: 1.2; text-align: center;">
+                <div class="era-circle" data-era="2020" style="width: 170px; height: 170px; margin: 0 auto 25px; border: 4px solid #4facfe; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-direction: column; background: radial-gradient(circle, rgba(79,172,254,0.15) 0%, transparent 70%); cursor: pointer; transition: all 0.3s ease;">
+                    <div style="font-size: 13px; font-weight: bold;">Enterprise</div>
+                    <div style="font-size: 13px; font-weight: bold; color: #4facfe;">Liquidity</div>
+                    <div style="font-size: 13px; font-weight: bold;">Management</div>
+                </div>
+                <div class="era-content" data-era="2020" style="display: none; opacity: 0; transition: opacity 0.5s ease; text-align: left; padding: 0 10px;">
+                    <ul style="font-size: 15px; list-style: disc; padding-left: 20px; color: rgba(255,255,255,0.9); line-height: 2;">
+                        <li>Bank statement integration</li>
+                        <li style="color: #ffeb3b;">Cash management</li>
+                        <li style="color: #ffeb3b;">Liquidity planning</li>
+                        <li>Payment hub</li>
+                        <li>Risk management</li>
+                        <li>Working capital</li>
+                    </ul>
+                    <div style="margin-top: 15px; font-size: 14px;">
+                        <div style="color: rgba(255,255,255,0.9); font-weight: bold;">• Platform Openness</div>
+                        <div style="padding-left: 15px; color: rgba(255,255,255,0.7); line-height: 1.8;">○ API ready<br>○ Custom script in/outbound<br>○ Custom reporting / Excel Plugin<br>○ BI (Qlik)</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 2025 Column -->
+            <div style="flex: 1.2; text-align: center;">
+                <div class="era-circle" data-era="2025" style="width: 200px; margin: 0 auto 25px; padding: 18px; background: linear-gradient(135deg, #0d2b2b 0%, #1a3a3a 100%); border-radius: 12px; border: 3px solid #e91e8c; cursor: pointer; transition: all 0.3s ease;">
+                    <div style="font-size: 26px; font-weight: 900; color: #4facfe;">Liquidity</div>
+                    <div style="font-size: 26px; font-weight: 900; color: #e91e8c;">Performance</div>
+                    <div style="font-size: 26px; font-weight: 900; color: #f5c518;">Platform</div>
+                </div>
+                <div class="era-content" data-era="2025" style="display: none; opacity: 0; transition: opacity 0.5s ease; text-align: left; padding: 0 10px;">
+                    <ul style="font-size: 15px; list-style: disc; padding-left: 20px; color: rgba(255,255,255,0.9); line-height: 2;">
+                        <li>Bank statement integration</li>
+                        <li style="color: #ffeb3b;">Cash management</li>
+                        <li style="color: #ffeb3b;">Liquidity planning</li>
+                        <li style="color: #ffeb3b;">Liquidity Modeling</li>
+                        <li>Payment hub</li>
+                        <li>Risk management</li>
+                        <li>Working capital</li>
+                    </ul>
+                    <div style="margin-top: 15px; font-size: 14px;">
+                        <div style="color: rgba(255,255,255,0.9); font-weight: bold;">• AI-powered Platform</div>
+                        <div style="padding-left: 15px; color: rgba(255,255,255,0.7); line-height: 1.8;">○ API leader<br>○ Gen-AI scripting<br>○ Embedded AI in Excel studio<br>○ AI agents<br>○ AI-predicted Forecast<br>○ BI (Anything)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Future View (Hidden by default) -->
+    <div id="future-view" style="display: none; width: 100%; max-width: 1800px; padding: 20px;">
+        
+        <!-- Section 1: AI-Enhanced Features -->
+        <div style="margin-bottom: 25px;">
+            <div onclick="toggleSection('ai-content')" style="cursor: pointer; padding: 15px 20px; background: linear-gradient(135deg, rgba(156,39,176,0.3) 0%, rgba(156,39,176,0.1) 100%); border-radius: 12px; border: 2px solid #9c27b0; display: flex; align-items: center; justify-content: space-between;">
+                <span style="font-size: 18px; font-weight: bold; color: #ce93d8;">🤖 1. AI-Enhanced Features</span>
+                <span id="ai-toggle" style="font-size: 20px; color: #ce93d8; transition: transform 0.3s ease;">▼</span>
+            </div>
+            <div id="ai-content" style="margin-top: 15px; padding: 25px; background: rgba(0,0,0,0.3); border-radius: 12px; border: 1px solid rgba(156,39,176,0.3);">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                    
+                    <!-- AI Matching -->
+                    <div class="ai-card" style="padding: 20px; background: linear-gradient(135deg, rgba(156,39,176,0.2) 0%, rgba(156,39,176,0.05) 100%); border-radius: 12px; border: 2px solid rgba(156,39,176,0.5); transition: all 0.3s ease;">
+                        <div style="font-size: 40px; text-align: center; margin-bottom: 15px;">🎯</div>
+                        <div style="font-size: 16px; color: #ce93d8; font-weight: bold; text-align: center; margin-bottom: 10px;">Intelligent Matching</div>
+                        <ul style="font-size: 13px; color: rgba(255,255,255,0.8); line-height: 1.8; padding-left: 20px;">
+                            <li>Auto-reconcile statements with forecasts</li>
+                            <li>ML-powered transaction classification</li>
+                            <li>Anomaly detection & flagging</li>
+                            <li>Pattern recognition across entities</li>
+                        </ul>
+                        <div style="margin-top: 15px; padding: 10px; background: rgba(156,39,176,0.2); border-radius: 8px; font-size: 12px; color: #ce93d8; text-align: center;">
+                            💡 <strong>90%</strong> reduction in manual reconciliation
+                        </div>
+                    </div>
+                    
+                    <!-- AI Recommendations -->
+                    <div class="ai-card" style="padding: 20px; background: linear-gradient(135deg, rgba(233,30,140,0.2) 0%, rgba(233,30,140,0.05) 100%); border-radius: 12px; border: 2px solid rgba(233,30,140,0.5); transition: all 0.3s ease;">
+                        <div style="font-size: 40px; text-align: center; margin-bottom: 15px;">💡</div>
+                        <div style="font-size: 16px; color: #e91e8c; font-weight: bold; text-align: center; margin-bottom: 10px;">Smart Recommendations</div>
+                        <ul style="font-size: 13px; color: rgba(255,255,255,0.8); line-height: 1.8; padding-left: 20px;">
+                            <li>Optimal cash positioning suggestions</li>
+                            <li>FX hedging strategy advisor</li>
+                            <li>Investment opportunity alerts</li>
+                            <li>Risk mitigation proposals</li>
+                        </ul>
+                        <div style="margin-top: 15px; padding: 10px; background: rgba(233,30,140,0.2); border-radius: 8px; font-size: 12px; color: #e91e8c; text-align: center;">
+                            💡 <strong>15%</strong> improvement in yield optimization
+                        </div>
+                    </div>
+                    
+                    <!-- AI Setup Generation -->
+                    <div class="ai-card" style="padding: 20px; background: linear-gradient(135deg, rgba(255,152,0,0.2) 0%, rgba(255,152,0,0.05) 100%); border-radius: 12px; border: 2px solid rgba(255,152,0,0.5); transition: all 0.3s ease;">
+                        <div style="font-size: 40px; text-align: center; margin-bottom: 15px;">⚡</div>
+                        <div style="font-size: 16px; color: #ffcc80; font-weight: bold; text-align: center; margin-bottom: 10px;">Auto Setup Generation</div>
+                        <ul style="font-size: 13px; color: rgba(255,255,255,0.8); line-height: 1.8; padding-left: 20px;">
+                            <li>Natural language configuration</li>
+                            <li>Template-based workflow creation</li>
+                            <li>Self-healing rule engines</li>
+                            <li>Intelligent default suggestions</li>
+                        </ul>
+                        <div style="margin-top: 15px; padding: 10px; background: rgba(255,152,0,0.2); border-radius: 8px; font-size: 12px; color: #ffcc80; text-align: center;">
+                            💡 <strong>70%</strong> faster implementation time
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- TAI Agent Banner -->
+                <div style="margin-top: 25px; padding: 20px; background: linear-gradient(135deg, rgba(233,30,140,0.3) 0%, rgba(255,215,0,0.1) 100%); border-radius: 12px; border: 2px solid #e91e8c; display: flex; align-items: center; gap: 20px;">
+                    <div style="font-size: 50px;">🤖</div>
+                    <div style="flex: 1;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 20px; color: #e91e8c; font-weight: bold;">TAI - Treasury AI Agent</span>
+                            <span style="font-size: 10px; color: #e91e8c; background: rgba(233,30,140,0.3); padding: 3px 10px; border-radius: 10px;">COMING SOON</span>
+                        </div>
+                        <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-top: 8px;">Your AI-powered treasury co-pilot: conversational interface, autonomous task execution, predictive insights & proactive alerts</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Section 2: Volume-Enabled Bank Statements -->
+        <div style="margin-bottom: 25px;">
+            <div onclick="toggleSection('volume-content')" style="cursor: pointer; padding: 15px 20px; background: linear-gradient(135deg, rgba(102,126,234,0.3) 0%, rgba(102,126,234,0.1) 100%); border-radius: 12px; border: 2px solid #667eea; display: flex; align-items: center; justify-content: space-between;">
+                <span style="font-size: 18px; font-weight: bold; color: #667eea;">📦 2. Volume-Enabled Bank Statements</span>
+                <span id="volume-toggle" style="font-size: 20px; color: #667eea; transition: transform 0.3s ease;">▶</span>
+            </div>
+            <div id="volume-content" style="display: none; margin-top: 15px; padding: 25px; background: rgba(0,0,0,0.3); border-radius: 12px; border: 1px solid rgba(102,126,234,0.3);">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="font-size: 16px; color: rgba(255,255,255,0.7);">Microservices architecture enabling horizontal scaling for high-volume statement processing</div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">
+                    <!-- Data Ingestion -->
+                    <div class="microservice-card" style="padding: 20px; background: linear-gradient(135deg, rgba(102,126,234,0.3) 0%, rgba(102,126,234,0.1) 100%); border-radius: 12px; border: 2px solid #667eea; transition: all 0.3s ease;">
+                        <div style="font-size: 14px; color: #667eea; font-weight: bold; margin-bottom: 10px;">📥 Data Ingestion</div>
+                        <div style="font-size: 12px; color: rgba(255,255,255,0.8); line-height: 1.6;">
+                            • Bank Connectivity API<br>
+                            • Format Parser Service<br>
+                            • Statement Normalizer
+                        </div>
+                        <div style="margin-top: 12px; padding: 8px; background: rgba(102,126,234,0.2); border-radius: 6px; font-size: 11px; color: #667eea;">
+                            ⚡ Independent scaling<br>
+                            🔄 Hot-swappable formats
+                        </div>
+                    </div>
+                    
+                    <!-- Aggregation -->
+                    <div class="microservice-card" style="padding: 20px; background: linear-gradient(135deg, rgba(233,30,140,0.3) 0%, rgba(233,30,140,0.1) 100%); border-radius: 12px; border: 2px solid #e91e8c; transition: all 0.3s ease;">
+                        <div style="font-size: 14px; color: #e91e8c; font-weight: bold; margin-bottom: 10px;">📊 Aggregation Engine</div>
+                        <div style="font-size: 12px; color: rgba(255,255,255,0.8); line-height: 1.6;">
+                            • Tagging Service<br>
+                            • Categorization API<br>
+                            • Consolidation Worker
+                        </div>
+                        <div style="margin-top: 12px; padding: 8px; background: rgba(233,30,140,0.2); border-radius: 6px; font-size: 11px; color: #e91e8c;">
+                            ⚡ Multi-tenant ready<br>
+                            🔄 Event-driven
+                        </div>
+                    </div>
+                    
+                    <!-- Derivation -->
+                    <div class="microservice-card" style="padding: 20px; background: linear-gradient(135deg, rgba(79,172,254,0.3) 0%, rgba(79,172,254,0.1) 100%); border-radius: 12px; border: 2px solid #4facfe; transition: all 0.3s ease;">
+                        <div style="font-size: 14px; color: #4facfe; font-weight: bold; margin-bottom: 10px;">⚙️ Derivation Service</div>
+                        <div style="font-size: 12px; color: rgba(255,255,255,0.8); line-height: 1.6;">
+                            • Interco Calculator<br>
+                            • Interest Engine<br>
+                            • GL Entry Generator
+                        </div>
+                        <div style="margin-top: 12px; padding: 8px; background: rgba(79,172,254,0.2); border-radius: 6px; font-size: 11px; color: #4facfe;">
+                            ⚡ Stateless compute<br>
+                            🔄 Cacheable results
+                        </div>
+                    </div>
+                    
+                    <!-- Execution -->
+                    <div class="microservice-card" style="padding: 20px; background: linear-gradient(135deg, rgba(255,215,0,0.3) 0%, rgba(255,215,0,0.1) 100%); border-radius: 12px; border: 2px solid #FFD700; transition: all 0.3s ease;">
+                        <div style="font-size: 14px; color: #FFD700; font-weight: bold; margin-bottom: 10px;">🚀 Execution Hub</div>
+                        <div style="font-size: 12px; color: rgba(255,255,255,0.8); line-height: 1.6;">
+                            • Payment Orchestrator<br>
+                            • ERP Export Service<br>
+                            • Exposure Calculator
+                        </div>
+                        <div style="margin-top: 12px; padding: 8px; background: rgba(255,215,0,0.2); border-radius: 6px; font-size: 11px; color: #FFD700;">
+                            ⚡ Transaction-safe<br>
+                            🔄 Retry & rollback
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Shared Infrastructure -->
+                <div style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px; border: 1px dashed rgba(255,255,255,0.2);">
+                    <div style="font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 10px; text-align: center;">SHARED PLATFORM SERVICES</div>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
+                        <span style="padding: 8px 15px; background: rgba(255,255,255,0.1); border-radius: 20px; font-size: 12px; color: rgba(255,255,255,0.7);">🔐 Auth Gateway</span>
+                        <span style="padding: 8px 15px; background: rgba(255,255,255,0.1); border-radius: 20px; font-size: 12px; color: rgba(255,255,255,0.7);">📨 Event Bus (Kafka)</span>
+                        <span style="padding: 8px 15px; background: rgba(255,255,255,0.1); border-radius: 20px; font-size: 12px; color: rgba(255,255,255,0.7);">💾 Data Lake</span>
+                        <span style="padding: 8px 15px; background: rgba(255,255,255,0.1); border-radius: 20px; font-size: 12px; color: rgba(255,255,255,0.7);">📊 Real-time Analytics</span>
+                        <span style="padding: 8px 15px; background: rgba(255,255,255,0.1); border-radius: 20px; font-size: 12px; color: rgba(255,255,255,0.7);">🔄 API Gateway</span>
+                    </div>
+                </div>
+                
+                <!-- Volume Stats -->
+                <div style="margin-top: 20px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; text-align: center;">
+                    <div style="padding: 15px; background: rgba(102,126,234,0.1); border-radius: 10px;">
+                        <div style="font-size: 28px; color: #667eea; font-weight: bold;">10M+</div>
+                        <div style="font-size: 12px; color: rgba(255,255,255,0.6);">Transactions/day</div>
+                    </div>
+                    <div style="padding: 15px; background: rgba(233,30,140,0.1); border-radius: 10px;">
+                        <div style="font-size: 28px; color: #e91e8c; font-weight: bold;">&lt;100ms</div>
+                        <div style="font-size: 12px; color: rgba(255,255,255,0.6);">Processing latency</div>
+                    </div>
+                    <div style="padding: 15px; background: rgba(79,172,254,0.1); border-radius: 10px;">
+                        <div style="font-size: 28px; color: #4facfe; font-weight: bold;">99.99%</div>
+                        <div style="font-size: 12px; color: rgba(255,255,255,0.6);">Uptime SLA</div>
+                    </div>
+                    <div style="padding: 15px; background: rgba(255,215,0,0.1); border-radius: 10px;">
+                        <div style="font-size: 28px; color: #FFD700; font-weight: bold;">∞</div>
+                        <div style="font-size: 12px; color: rgba(255,255,255,0.6);">Horizontal scale</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Section 3: Moving Up to the CFO Office -->
+        <div style="margin-bottom: 25px;">
+            <div onclick="toggleSection('cfo-content')" style="cursor: pointer; padding: 15px 20px; background: linear-gradient(135deg, rgba(79,172,254,0.3) 0%, rgba(79,172,254,0.1) 100%); border-radius: 12px; border: 2px solid #4facfe; display: flex; align-items: center; justify-content: space-between;">
+                <span style="font-size: 18px; font-weight: bold; color: #4facfe;">📈 3. Moving Up to the CFO Office</span>
+                <span id="cfo-toggle" style="font-size: 20px; color: #4facfe; transition: transform 0.3s ease;">▼</span>
+            </div>
+            <div id="cfo-content" style="margin-top: 15px; padding: 25px; background: rgba(0,0,0,0.3); border-radius: 12px; border: 1px solid rgba(79,172,254,0.3);">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="font-size: 16px; color: rgba(255,255,255,0.7);">Real-Time Financial Statements: From bank transaction to CFO dashboard in &lt;1 second</div>
+                    <a href="https://vinzzzzz2000.github.io/realtime-fs-poc/" target="_blank" style="display: inline-block; margin-top: 10px; color: #4facfe; text-decoration: none; font-size: 14px;">
+                        🔗 Open demo in full screen →
+                    </a>
+                </div>
+                <iframe src="https://vinzzzzz2000.github.io/realtime-fs-poc/" style="width: 100%; height: 700px; border: none; border-radius: 10px; background: #0d1117;"></iframe>
+            </div>
+        </div>
+        
+        <!-- Evolution Timeline -->
+        <div style="padding: 25px; background: rgba(255,255,255,0.03); border-radius: 15px; border: 1px solid rgba(255,255,255,0.1);">
+            <div style="text-align: center; margin-bottom: 20px; font-size: 14px; color: rgba(255,255,255,0.5);">PLATFORM EVOLUTION ROADMAP</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; position: relative;">
+                <div style="position: absolute; top: 50%; left: 10%; right: 10%; height: 2px; background: linear-gradient(90deg, #667eea 0%, #e91e8c 50%, #FFD700 100%); z-index: 0;"></div>
+                
+                <div style="flex: 1; text-align: center; z-index: 1;">
+                    <div style="width: 60px; height: 60px; margin: 0 auto; background: #0d2b2b; border: 3px solid #667eea; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px;">✓</div>
+                    <div style="margin-top: 10px; font-size: 13px; color: #667eea; font-weight: bold;">2024</div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.6);">API Foundation</div>
+                </div>
+                
+                <div style="flex: 1; text-align: center; z-index: 1;">
+                    <div style="width: 60px; height: 60px; margin: 0 auto; background: #0d2b2b; border: 3px solid #e91e8c; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px;">🔄</div>
+                    <div style="margin-top: 10px; font-size: 13px; color: #e91e8c; font-weight: bold;">2025</div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.6);">Microservices + AI</div>
+                </div>
+                
+                <div style="flex: 1; text-align: center; z-index: 1;">
+                    <div style="width: 60px; height: 60px; margin: 0 auto; background: #0d2b2b; border: 3px solid #FFD700; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px;">🤖</div>
+                    <div style="margin-top: 10px; font-size: 13px; color: #FFD700; font-weight: bold;">2026</div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.6);">CFO Real-Time</div>
+                </div>
+                
+                <div style="flex: 1; text-align: center; z-index: 1;">
+                    <div style="width: 60px; height: 60px; margin: 0 auto; background: #0d2b2b; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px;">🚀</div>
+                    <div style="margin-top: 10px; font-size: 13px; color: rgba(255,255,255,0.5); font-weight: bold;">2027+</div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.4);">Autonomous Treasury</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="tooltip" id="tooltip"></div>
+    
+    <script>
+        // Toggle Navigation Levels
+        function toggleNavLevels() {
+            const container = document.getElementById('level-buttons-container');
+            const arrow = document.getElementById('nav-arrow');
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+                arrow.textContent = '▲';
+            } else {
+                container.style.display = 'none';
+                arrow.textContent = '▼';
+            }
+        }
+        
+        const totalARR = 428.4;
+        
+        // Color definitions for pillars and value props
+        const pillarColors = {
+            "TMS": "#4169E1",
+            "Payment": "#9370DB",
+            "Risk": "#4facfe",
+            "FiREapps": "#FF6347",
+            "SCF": "#DAA520"
+        };
+        
+        const valuePropColors = {
+            "Data Ingestion": "#667eea",
+            "Centralization": "#f093fb",
+            "Enrichment": "#4facfe",
+            "Execution": "#43e97b"
+        };
+        
+        // ACTUAL numbers from latest screenshot showing orthogonal view
+        // Total base = $428.4M but pillars sum to $643M (150%) due to overlaps/bundles
+        
+        const data = {
+            name: "Total ARR",
+            value: totalARR,
+            level: 1,
+            children: [
+                // TMS - $227M (53%)
+                {
+                    name: "TMS",
+                    value: 227,
+                    level: 2,
+                    color: pillarColors["TMS"],
+                    description: "Treasury Management System - Core cash & liquidity platform",
+                    children: [
+                        { name: "Get bank data", value: 49, level: 3, stage: 1, color: valuePropColors["Data Ingestion"], description: "VPN links, bank statements (BFA), CAMT053, MT940",
+                            children: [
+                                { name: "EOD", value: 25, level: 4, color: "#5B8DEE", tableTooltip: true },
+                                { name: "Intraday", value: 14, level: 4, color: "#7BA3F0", tableTooltip: true },
+                                { name: "Bank fees", value: 7, level: 4, color: "#9BB9F2", tableTooltip: true },
+                                { name: "Assets", value: 3, level: 4, color: "#BBCFF4", tableTooltip: true }
+                            ]
+                        },
+                        { name: "Aggregate Forecast", value: 91, level: 3, stage: 2, color: valuePropColors["Centralization"], description: "Cash management, sessions, multi-entity consolidation" },
+                        { name: "Derive data", value: 17, level: 3, stage: 3, color: valuePropColors["Enrichment"], description: "Liquidity planning (ALP), forecasting, IHB, treasury ops" },
+                        { name: "Execute", value: 70, level: 3, stage: 4, color: valuePropColors["Execution"], description: "Payment execution, digital signatures, approvals" }
+                    ]
+                },
+                // Payment - $124M (29%)
+                {
+                    name: "Payment",
+                    value: 124,
+                    level: 2,
+                    color: pillarColors["Payment"],
+                    description: "Payment Automation - End-to-end payment processing",
+                    children: [
+                        { name: "Data Ingestion", value: 15, level: 3, stage: 1, color: valuePropColors["Data Ingestion"], description: "ERP interfaces, payment files, bank ACKs" },
+                        { name: "Centralization", value: 50, level: 3, stage: 2, color: valuePropColors["Centralization"], description: "Payment hub, multi-bank routing, format conversion" },
+                        { name: "Enrichment", value: 37, level: 3, stage: 3, color: valuePropColors["Enrichment"], description: "Fraud detection, payment intelligence, analytics" },
+                        { name: "Execution", value: 22, level: 3, stage: 4, color: valuePropColors["Execution"], description: "Payment release, batch processing, tracking" }
+                    ]
+                },
+                // Risk - $60M (14%)
+                {
+                    name: "Risk",
+                    value: 60,
+                    level: 2,
+                    color: pillarColors["Risk"],
+                    description: "Risk Management - FX & interest rate hedging",
+                    children: [
+                        { name: "Data Ingestion", value: 7, level: 3, stage: 1, color: valuePropColors["Data Ingestion"], description: "Market data feeds, FX rates, interest rates" },
+                        { name: "Centralization", value: 24, level: 3, stage: 2, color: valuePropColors["Centralization"], description: "Position consolidation, exposure aggregation" },
+                        { name: "Enrichment", value: 18, level: 3, stage: 3, color: valuePropColors["Enrichment"], description: "Risk analytics, VaR calculation, hedge strategies" },
+                        { name: "Execution", value: 11, level: 3, stage: 4, color: valuePropColors["Execution"], description: "Hedge execution, FX forwards, options, swaps" }
+                    ]
+                },
+                // FiREapps - $10M (2%)
+                {
+                    name: "FiREapps",
+                    value: 10,
+                    level: 2,
+                    color: pillarColors["FiREapps"],
+                    description: "Financial Reporting & Analytics",
+                    children: [
+                        { name: "Data Ingestion", value: 1.2, level: 3, stage: 1, color: valuePropColors["Data Ingestion"], description: "Multi-source data collection from banks, ERP, TMS" },
+                        { name: "Centralization", value: 4, level: 3, stage: 2, color: valuePropColors["Centralization"], description: "Report standardization, data normalization" },
+                        { name: "Enrichment", value: 3, level: 3, stage: 3, color: valuePropColors["Enrichment"], description: "Financial analytics, KPI calculations, variance analysis" },
+                        { name: "Execution", value: 1.8, level: 3, stage: 4, color: valuePropColors["Execution"], description: "Report distribution, stakeholder access" }
+                    ]
+                },
+                // SCF - $7M (2%)
+                {
+                    name: "SCF",
+                    value: 7,
+                    level: 2,
+                    color: pillarColors["SCF"],
+                    description: "Supply Chain Finance",
+                    children: [
+                        { name: "Data Ingestion", value: 0.8, level: 3, stage: 1, color: valuePropColors["Data Ingestion"], description: "Invoice import from ERP, supplier portals" },
+                        { name: "Centralization", value: 2.8, level: 3, stage: 2, color: valuePropColors["Centralization"], description: "Supplier network, onboarding, agreements" },
+                        { name: "Enrichment", value: 2.1, level: 3, stage: 3, color: valuePropColors["Enrichment"], description: "Financing options, discount calculations" },
+                        { name: "Execution", value: 1.3, level: 3, stage: 4, color: valuePropColors["Execution"], description: "Financing execution, early payments, funder coordination" }
+                    ]
+                }
+            ]
+        };
+
+        const width = Math.min(window.innerWidth - 40, 1800);
+        const height = window.innerHeight * 0.85;
+        
+        const svg = d3.select("#bubble-container")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .attr("viewBox", [0, 0, width, height]);
+        
+        const g = svg.append("g");
+        
+        const zoom = d3.zoom()
+            .scaleExtent([0.1, 3])
+            .wheelDelta((event) => {
+                // Much less sensitive zoom - reduced by 5x
+                return -event.deltaY * (event.deltaMode === 1 ? 0.01 : event.deltaMode ? 0.2 : 0.0004);
+            })
+            .on("zoom", (event) => {
+                g.transition()
+                    .duration(50)
+                    .ease(d3.easeLinear)
+                    .attr("transform", event.transform);
+            });
+        
+        svg.call(zoom).on("dblclick.zoom", null);
+        
+        // Zoom controls
+        const controlsGroup = svg.append("g")
+            .attr("class", "zoom-controls")
+            .attr("transform", `translate(20, ${height - 120})`);
+        
+        const zoomInButton = controlsGroup.append("g")
+            .style("cursor", "pointer")
+            .on("click", () => {
+                svg.transition().duration(500).ease(d3.easeCubicOut).call(zoom.scaleBy, 1.2);
+            });
+        
+        zoomInButton.append("circle")
+            .attr("r", 25)
+            .attr("fill", "rgba(102, 126, 234, 0.9)")
+            .attr("stroke", "white")
+            .attr("stroke-width", 2);
+        
+        zoomInButton.append("text")
+            .attr("text-anchor", "middle")
+            .attr("dy", "0.35em")
+            .attr("fill", "white")
+            .attr("font-size", "24px")
+            .attr("font-weight", "bold")
+            .text("+");
+        
+        const zoomOutButton = controlsGroup.append("g")
+            .attr("transform", "translate(0, 60)")
+            .style("cursor", "pointer")
+            .on("click", () => {
+                svg.transition().duration(500).ease(d3.easeCubicOut).call(zoom.scaleBy, 0.83);
+            });
+        
+        zoomOutButton.append("circle")
+            .attr("r", 25)
+            .attr("fill", "rgba(102, 126, 234, 0.9)")
+            .attr("stroke", "white")
+            .attr("stroke-width", 2);
+        
+        zoomOutButton.append("text")
+            .attr("text-anchor", "middle")
+            .attr("dy", "0.35em")
+            .attr("fill", "white")
+            .attr("font-size", "24px")
+            .attr("font-weight", "bold")
+            .text("−");
+        
+        const resetButton = controlsGroup.append("g")
+            .attr("transform", "translate(60, 0)")
+            .style("cursor", "pointer")
+            .on("click", () => {
+                svg.transition().duration(750).ease(d3.easeCubicInOut).call(zoom.transform, d3.zoomIdentity);
+            });
+        
+        resetButton.append("circle")
+            .attr("r", 25)
+            .attr("fill", "rgba(102, 126, 234, 0.9)")
+            .attr("stroke", "white")
+            .attr("stroke-width", 2);
+        
+        resetButton.append("text")
+            .attr("text-anchor", "middle")
+            .attr("dy", "0.35em")
+            .attr("fill", "white")
+            .attr("font-size", "16px")
+            .attr("font-weight", "bold")
+            .text("⟲");
+
+        const pack = d3.pack()
+            .size([width - 100, height - 100])
+            .padding(d => {
+                if (d.depth === 0) return 30;
+                if (d.depth === 1) return 18;
+                return 4;
+            });
+
+        const root = d3.hierarchy(data)
+            .sum(d => d.children ? 0 : d.value)
+            .sort((a, b) => b.value - a.value);
+
+        const nodes = pack(root).descendants();
+        
+        // Manually reposition TMS children so Get bank data is on top
+        const tmsChildren = nodes.filter(d => d.parent && d.parent.data.name === "TMS");
+        if (tmsChildren.length === 4) {
+            // Find each node
+            const getBankData = tmsChildren.find(d => d.data.name === "Get bank data");
+            const aggregate = tmsChildren.find(d => d.data.name === "Aggregate Forecast");
+            const derive = tmsChildren.find(d => d.data.name === "Derive data");
+            const execute = tmsChildren.find(d => d.data.name === "Execute");
+            
+            // Get TMS center
+            const tmsNode = nodes.find(d => d.data.name === "TMS");
+            const cx = tmsNode.x;
+            const cy = tmsNode.y;
+            const pr = tmsNode.r;
+            
+            // Position: Get bank data on top, Derive data at bottom, Aggregate left, Execute right
+            if (getBankData && aggregate && derive && execute) {
+                // Store old position for delta calculation
+                const oldX = getBankData.x;
+                const oldY = getBankData.y;
+                
+                getBankData.x = cx;
+                getBankData.y = cy - pr + getBankData.r + 8;
+                
+                // Move Get bank data's children along with it
+                const deltaX = getBankData.x - oldX;
+                const deltaY = getBankData.y - oldY;
+                const bankDataChildren = nodes.filter(d => d.parent && d.parent.data.name === "Get bank data");
+                bankDataChildren.forEach(child => {
+                    child.x += deltaX;
+                    child.y += deltaY;
+                });
+                
+                derive.x = cx;
+                derive.y = cy + pr - derive.r - 8;
+                
+                aggregate.x = cx - pr/2 + aggregate.r/3;
+                aggregate.y = cy;
+                
+                execute.x = cx + pr/2 - execute.r/3;
+                execute.y = cy;
+            }
+        }
+        
+        const tooltip = d3.select("#tooltip");
+
+        const node = g.selectAll("g")
+            .data(nodes)
+            .join("g")
+            .attr("transform", d => `translate(${d.x + 50},${d.y + 50})`);
+
+        node.append("circle")
+            .attr("class", "bubble")
+            .attr("r", d => d.r)
+            .attr("fill", d => {
+                if (d.depth === 0) return "rgba(102, 126, 234, 0.15)";
+                return d.data.color + "cc";
+            })
+            .attr("stroke", d => {
+                if (d.depth === 0) return "rgba(255, 255, 255, 0.5)";
+                if (d.depth === 1) return "rgba(255, 255, 255, 0.8)";
+                return "rgba(255, 255, 255, 0.5)";
+            })
+            .attr("stroke-width", d => {
+                if (d.depth === 0) return 8;
+                if (d.depth === 1) return 5;
+                return 2;
+            })
+            .style("filter", d => d.depth > 0 ? "drop-shadow(0 4px 12px rgba(0,0,0,0.3))" : "none")
+            .on("mouseover", function(event, d) {
+                if (d.depth === 0) return;
+                
+                d3.select(this).transition().duration(200)
+                    .attr("stroke-width", d.depth === 1 ? 7 : 4);
+                
+                const percentage = ((d.value / totalARR) * 100).toFixed(1);
+                const levelName = d.depth === 1 ? "Pillar (Product)" : d.depth === 2 ? "Value Prop" : "";
+                
+                let tooltipContent = `
+                    <div class="tooltip-title">${d.data.name}</div>
+                    <div class="tooltip-value">$${d.value.toFixed(0)}M (${percentage}%)</div>
+                `;
+                
+                // Special table tooltip for bank data children
+                if (d.data.tableTooltip) {
+                    tooltipContent = `
+                        <div class="tooltip-title">${d.data.name}</div>
+                        <table style="border-collapse:collapse;width:100%;margin-top:10px;font-size:13px;">
+                            <tr style="background:rgba(102,126,234,0.3);">
+                                <th style="padding:8px;border:1px solid #555;"></th>
+                                <th style="padding:8px;border:1px solid #555;">EOD</th>
+                                <th style="padding:8px;border:1px solid #555;">Intraday</th>
+                            </tr>
+                            <tr>
+                                <td style="padding:8px;border:1px solid #555;font-weight:bold;">2024</td>
+                                <td style="padding:8px;border:1px solid #555;">2,7B</td>
+                                <td style="padding:8px;border:1px solid #555;">0,84K</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:8px;border:1px solid #555;font-weight:bold;">2025</td>
+                                <td style="padding:8px;border:1px solid #555;">3,5B</td>
+                                <td style="padding:8px;border:1px solid #555;">1,1B</td>
+                            </tr>
+                            <tr style="background:rgba(102,126,234,0.3);">
+                                <td style="padding:8px;border:1px solid #555;font-weight:bold;">YoY</td>
+                                <td style="padding:8px;border:1px solid #555;color:#4f4;font-weight:bold;">30%</td>
+                                <td style="padding:8px;border:1px solid #555;color:#4f4;font-weight:bold;">30%</td>
+                            </tr>
+                        </table>
+                    `;
+                } else {
+                    if (levelName) {
+                        tooltipContent += `<div class="tooltip-desc"><strong>${levelName}</strong></div>`;
+                    }
+                    
+                    if (d.data.description) {
+                        tooltipContent += `<div class="tooltip-desc">${d.data.description}</div>`;
+                    }
+                }
+                
+                tooltip
+                    .style("opacity", 1)
+                    .html(tooltipContent)
+                    .style("left", (event.pageX + 15) + "px")
+                    .style("top", (event.pageY - 15) + "px");
+            })
+            .on("mousemove", function(event) {
+                tooltip.style("left", (event.pageX + 15) + "px").style("top", (event.pageY - 15) + "px");
+            })
+            .on("mouseout", function(event, d) {
+                d3.select(this).transition().duration(200)
+                    .attr("stroke-width", d.depth === 0 ? 8 : d.depth === 1 ? 5 : 2);
+                tooltip.style("opacity", 0);
+            });
+
+        // Root label
+        node.filter(d => d.depth === 0)
+            .append("text")
+            .attr("class", "bubble-label")
+            .attr("dy", "-1.5em")
+            .style("font-size", "48px")
+            .text("Total ARR");
+
+        node.filter(d => d.depth === 0)
+            .append("text")
+            .attr("class", "bubble-value")
+            .attr("dy", "1.5em")
+            .style("font-size", "64px")
+            .text("$428M");
+
+        // Pillar labels (level 2)
+        node.filter(d => d.depth === 1)
+            .append("text")
+            .attr("class", "bubble-label")
+            .attr("dy", "-0.8em")
+            .style("font-size", d => Math.min(d.r / 4, 22) + "px")
+            .text(d => d.data.name);
+
+        node.filter(d => d.depth === 1)
+            .append("text")
+            .attr("class", "bubble-value")
+            .attr("dy", "0.8em")
+            .style("font-size", d => Math.min(d.r / 3.5, 26) + "px")
+            .text(d => `$${d.value.toFixed(0)}M`);
+
+        node.filter(d => d.depth === 1)
+            .append("text")
+            .attr("class", "bubble-percentage")
+            .attr("dy", "2.2em")
+            .style("font-size", d => Math.min(d.r / 5, 15) + "px")
+            .text(d => {
+                const percentage = ((d.value / totalARR) * 100).toFixed(0);
+                return `${percentage}%`;
+            });
+
+        // Value prop labels (level 3)
+        node.filter(d => d.depth === 2 && d.r > 15)
+            .append("text")
+            .attr("class", "bubble-label")
+            .attr("dy", "-0.2em")
+            .style("font-size", d => {
+                // Scale font based on bubble radius
+                const size = Math.max(d.r / 4, 7);
+                return Math.min(size, 13) + "px";
+            })
+            .text(d => d.data.stage + ". " + d.data.name);
+
+        node.filter(d => d.depth === 2 && d.r > 15)
+            .append("text")
+            .attr("class", "bubble-value")
+            .attr("dy", "1em")
+            .style("font-size", d => {
+                const size = Math.max(d.r / 3.5, 8);
+                return Math.min(size, 14) + "px";
+            })
+            .text(d => `$${d.value.toFixed(0)}M`);
+
+        // Level 4 labels (Bank data children: EOD, Intraday, Bank fees, Assets)
+        node.filter(d => d.depth === 3)
+            .append("text")
+            .attr("class", "bubble-label")
+            .attr("dy", "0.35em")
+            .style("font-size", d => Math.max(d.r / 2.5, 8) + "px")
+            .text(d => d.data.name);
+
+        // Draw flow arrows within each pillar
+        nodes.filter(d => d.depth === 1).forEach(pillarNode => {
+            const stages = pillarNode.children;
+            if (!stages || stages.length < 2) return;
+            
+            stages.sort((a, b) => a.data.stage - b.data.stage);
+            
+            for (let i = 0; i < stages.length - 1; i++) {
+                const from = stages[i];
+                const to = stages[i + 1];
+                
+                const dx = to.x - from.x;
+                const dy = to.y - from.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance > from.r + to.r + 10) {
+                    const angle = Math.atan2(dy, dx);
+                    const startX = from.x + Math.cos(angle) * from.r;
+                    const startY = from.y + Math.sin(angle) * from.r;
+                    const endX = to.x - Math.cos(angle) * to.r;
+                    const endY = to.y - Math.sin(angle) * to.r;
+                    
+                    g.append("line")
+                        .attr("class", "flow-arrow")
+                        .attr("x1", startX + 50)
+                        .attr("y1", startY + 50)
+                        .attr("x2", endX + 50)
+                        .attr("y2", endY + 50);
+                    
+                    const arrowSize = 8;
+                    g.append("polygon")
+                        .attr("class", "arrow-head")
+                        .attr("points", `0,-${arrowSize} ${arrowSize * 1.5},0 0,${arrowSize}`)
+                        .attr("transform", `translate(${endX + 50}, ${endY + 50}) rotate(${angle * 180 / Math.PI})`);
+                }
+            }
+        });
+
+        node.style("opacity", 0).transition().duration(1000).delay((d, i) => i * 30).style("opacity", 1);
+        g.selectAll(".flow-arrow").style("opacity", 0).transition().duration(1000).delay(1500).style("opacity", 1);
+        
+        // Level filtering
+        let currentLevel = 'all';
+        
+        // Find TMS node for liquidity zoom
+        const tmsNode = nodes.find(d => d.data.name === "TMS");
+        
+        function updateLevelFilter(level) {
+            currentLevel = level;
+            
+            d3.selectAll('.level-button').classed('active', false);
+            d3.select(`[data-level="${level}"]`).classed('active', true);
+            
+            // Handle TAM view - zoom out to show market context
+            if (level === 'tam') {
+                // Zoom out significantly
+                svg.transition().duration(750).ease(d3.easeCubicInOut)
+                    .call(zoom.transform, d3.zoomIdentity.translate(width/2, height/2).scale(0.12));
+                
+                // Dim Kyriba bubbles
+                node.transition().duration(500).ease(d3.easeCubicInOut)
+                    .style('opacity', d => d.depth === 0 ? 1 : 0.15);
+                
+                node.selectAll('circle').transition().duration(500).ease(d3.easeCubicInOut)
+                    .style('opacity', d => d.depth === 0 ? 0.95 : 0.1)
+                    .style('filter', d => d.depth === 0 ? 'drop-shadow(0 0 40px rgba(255,215,0,1)) drop-shadow(0 0 80px rgba(255,215,0,0.6))' : 'none');
+                
+                g.selectAll('.flow-arrow, .arrow-head').transition().duration(500).style('opacity', 0);
+                
+                // Add TAM context
+                g.selectAll('.tam-circle').remove();
+                const tamGroup = g.append('g').attr('class', 'tam-circle');
+                
+                const kyribaRadius = nodes[0].r;
+                const tamRadius = kyribaRadius * 3.8;
+                const centerX = width/2 + 50;
+                const centerY = height/2 + 50;
+                
+                // Competitors based on IDC MarketScape 2023 + market research
+                // Leaders: Kyriba, FIS, SAP, GTreasury, Coupa, ION
+                // Major Players: Finastra, Adenza/Nasdaq, Murex
+                const competitors = [
+                    // LEADERS (brighter, closer to center-top)
+                    { name: 'FIS', arr: 400, color: '#8B9DC3', category: 'Leader', angle: -50 },
+                    { name: 'SAP', arr: 380, color: '#8B9DC3', category: 'Leader', angle: -20 },
+                    { name: 'GTreasury', arr: 150, color: '#8B9DC3', category: 'Leader', angle: 15 },
+                    { name: 'Coupa', arr: 120, color: '#8B9DC3', category: 'Leader', angle: 45 },
+                    { name: 'ION', arr: 580, color: '#8B9DC3', category: 'Leader', angle: 75 },
+                    // MAJOR PLAYERS (dimmer, outer ring)
+                    { name: 'Finastra', arr: 350, color: '#6c757d', category: 'Major', angle: 110 },
+                    { name: 'Adenza/Nasdaq', arr: 280, color: '#6c757d', category: 'Major', angle: 140 },
+                    { name: 'Murex', arr: 450, color: '#6c757d', category: 'Major', angle: 170 },
+                    { name: 'Oracle', arr: 250, color: '#6c757d', category: 'Major', angle: 200 },
+                    { name: 'HighRadius', arr: 180, color: '#6c757d', category: 'Major', angle: 230 },
+                ];
+                
+                // TAM outer circle
+                tamGroup.append('circle')
+                    .attr('cx', centerX)
+                    .attr('cy', centerY)
+                    .attr('r', 0)
+                    .attr('fill', 'rgba(79,172,254,0.02)')
+                    .attr('stroke', '#4facfe')
+                    .attr('stroke-width', 4)
+                    .attr('stroke-dasharray', '20,10')
+                    .attr('opacity', 0.8)
+                    .transition().duration(800)
+                    .attr('r', tamRadius);
+                
+                // Add competitor bubbles
+                competitors.forEach((comp, i) => {
+                    const compRadius = Math.sqrt(comp.arr / 428) * kyribaRadius * 0.85;
+                    const isLeader = comp.category === 'Leader';
+                    const distance = tamRadius * (isLeader ? 0.55 : 0.75);
+                    const angleRad = (comp.angle - 90) * Math.PI / 180;
+                    const cx = centerX + Math.cos(angleRad) * distance;
+                    const cy = centerY + Math.sin(angleRad) * distance;
+                    
+                    // Competitor circle
+                    tamGroup.append('circle')
+                        .attr('cx', cx)
+                        .attr('cy', cy)
+                        .attr('r', 0)
+                        .attr('fill', isLeader ? 'rgba(139,157,195,0.25)' : 'rgba(108,117,125,0.2)')
+                        .attr('stroke', comp.color)
+                        .attr('stroke-width', isLeader ? 4 : 3)
+                        .attr('opacity', 0)
+                        .transition().duration(600).delay(200 + i * 60)
+                        .attr('r', compRadius)
+                        .attr('opacity', isLeader ? 0.8 : 0.5);
+                    
+                    // Competitor label - MUCH BIGGER
+                    tamGroup.append('text')
+                        .attr('x', cx)
+                        .attr('y', cy - compRadius - 20)
+                        .attr('text-anchor', 'middle')
+                        .attr('fill', isLeader ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.6)')
+                        .attr('font-size', isLeader ? '48px' : '38px')
+                        .attr('font-weight', 'bold')
+                        .attr('opacity', 0)
+                        .text(comp.name)
+                        .transition().duration(400).delay(400 + i * 60)
+                        .attr('opacity', 1);
+                    
+                    // Competitor ARR - MUCH BIGGER
+                    tamGroup.append('text')
+                        .attr('x', cx)
+                        .attr('y', cy + 15)
+                        .attr('text-anchor', 'middle')
+                        .attr('fill', isLeader ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.5)')
+                        .attr('font-size', '40px')
+                        .attr('font-weight', 'bold')
+                        .attr('opacity', 0)
+                        .text('~$' + comp.arr + 'M')
+                        .transition().duration(400).delay(400 + i * 60)
+                        .attr('opacity', 1);
+                    
+                    // Category badge for leaders - BIGGER
+                    if (isLeader) {
+                        tamGroup.append('text')
+                            .attr('x', cx)
+                            .attr('y', cy + compRadius + 45)
+                            .attr('text-anchor', 'middle')
+                            .attr('fill', '#8B9DC3')
+                            .attr('font-size', '26px')
+                            .attr('opacity', 0)
+                            .text('IDC Leader')
+                            .transition().duration(400).delay(500 + i * 60)
+                            .attr('opacity', 0.7);
+                    }
+                });
+                
+                // Untapped market indicator - BIGGER
+                tamGroup.append('text')
+                    .attr('x', centerX + tamRadius * 0.75)
+                    .attr('y', centerY + tamRadius * 0.85)
+                    .attr('text-anchor', 'middle')
+                    .attr('fill', 'rgba(79,172,254,0.8)')
+                    .attr('font-size', '52px')
+                    .attr('font-weight', 'bold')
+                    .attr('font-style', 'italic')
+                    .attr('opacity', 0)
+                    .text('Untapped: ~$2.5B')
+                    .transition().duration(800).delay(1000)
+                    .attr('opacity', 1);
+                
+                tamGroup.append('text')
+                    .attr('x', centerX + tamRadius * 0.75)
+                    .attr('y', centerY + tamRadius * 0.85 + 50)
+                    .attr('text-anchor', 'middle')
+                    .attr('fill', 'rgba(79,172,254,0.5)')
+                    .attr('font-size', '32px')
+                    .attr('font-style', 'italic')
+                    .attr('opacity', 0)
+                    .text('(SMB + Spreadsheets)')
+                    .transition().duration(800).delay(1100)
+                    .attr('opacity', 1);
+                
+                // TAM title at top - MUCH BIGGER
+                tamGroup.append('text')
+                    .attr('x', centerX)
+                    .attr('y', centerY - tamRadius - 100)
+                    .attr('text-anchor', 'middle')
+                    .attr('fill', '#4facfe')
+                    .attr('font-size', '100px')
+                    .attr('font-weight', 'bold')
+                    .attr('opacity', 0)
+                    .text('TMS Market (TAM) — $6B')
+                    .transition().duration(800).delay(300)
+                    .attr('opacity', 1);
+                
+                tamGroup.append('text')
+                    .attr('x', centerX)
+                    .attr('y', centerY - tamRadius - 30)
+                    .attr('text-anchor', 'middle')
+                    .attr('fill', 'rgba(255,255,255,0.6)')
+                    .attr('font-size', '36px')
+                    .attr('opacity', 0)
+                    .text('Sources: IDC MarketScape 2023 • DataIntelo • ResearchAndMarkets')
+                    .transition().duration(800).delay(400)
+                    .attr('opacity', 1);
+                
+                // Kyriba highlight - BIGGEST and BRIGHTEST
+                tamGroup.append('text')
+                    .attr('x', centerX)
+                    .attr('y', centerY + kyribaRadius + 130)
+                    .attr('text-anchor', 'middle')
+                    .attr('fill', '#FFD700')
+                    .attr('font-size', '72px')
+                    .attr('font-weight', 'bold')
+                    .attr('opacity', 0)
+                    .text('★ KYRIBA — $428M ★')
+                    .transition().duration(800).delay(600)
+                    .attr('opacity', 1);
+                
+                tamGroup.append('text')
+                    .attr('x', centerX)
+                    .attr('y', centerY + kyribaRadius + 195)
+                    .attr('text-anchor', 'middle')
+                    .attr('fill', '#FFD700')
+                    .attr('font-size', '44px')
+                    .attr('opacity', 0)
+                    .text('IDC Leader — #1 Pure-Play Cloud TMS')
+                    .transition().duration(800).delay(700)
+                    .attr('opacity', 0.9);
+                
+                return;
+            }
+            
+            // Remove TAM circle when switching to other levels
+            g.selectAll('.tam-circle').remove();
+            
+            // Handle liquidity zoom
+            if (level === 'liquidity') {
+                // Zoom into TMS
+                if (tmsNode) {
+                    const scale = 2.2;
+                    const x = width / 2 - (tmsNode.x + 50) * scale;
+                    const y = height / 2 - (tmsNode.y + 50) * scale;
+                    
+                    svg.transition().duration(750).ease(d3.easeCubicInOut)
+                        .call(zoom.transform, d3.zoomIdentity.translate(x, y).scale(scale));
+                }
+                
+                // Show only TMS and its children, highlight Enrichment
+                node.transition().duration(500).ease(d3.easeCubicInOut)
+                    .style('opacity', d => {
+                        if (d.data.name === "TMS") return 1;
+                        if (d.parent && d.parent.data.name === "TMS") return 1;
+                        return 0.05;
+                    })
+                    .attr('pointer-events', d => {
+                        if (d.data.name === "TMS") return 'all';
+                        if (d.parent && d.parent.data.name === "TMS") return 'all';
+                        return 'none';
+                    });
+                
+                node.selectAll('circle').transition().duration(500).ease(d3.easeCubicInOut)
+                    .style('opacity', function() {
+                        const d = d3.select(this.parentNode).datum();
+                        if (d.data.name === "TMS") return 0.95;
+                        if (d.parent && d.parent.data.name === "TMS") {
+                            // Highlight Enrichment (where ALP lives)
+                            return d.data.name === "Enrichment" ? 1 : 0.7;
+                        }
+                        return 0.03;
+                    })
+                    .attr('stroke-width', function() {
+                        const d = d3.select(this.parentNode).datum();
+                        if (d.data.name === "Enrichment" && d.parent && d.parent.data.name === "TMS") return 5;
+                        if (d.data.name === "TMS") return 6;
+                        if (d.parent && d.parent.data.name === "TMS") return 3;
+                        return 1;
+                    })
+                    .style('filter', function() {
+                        const d = d3.select(this.parentNode).datum();
+                        if (d.data.name === "Enrichment" && d.parent && d.parent.data.name === "TMS") {
+                            return 'drop-shadow(0 0 15px rgba(79, 172, 254, 0.8))';
+                        }
+                        return d.depth > 0 ? 'drop-shadow(0 4px 12px rgba(0,0,0,0.3))' : 'none';
+                    });
+                
+                g.selectAll('.flow-arrow, .arrow-head').transition().duration(500).ease(d3.easeCubicInOut)
+                    .style('opacity', 0.6);
+                
+                return;
+            }
+            
+            // Handle bank data zoom
+            if (level === 'bankdata') {
+                // Find Get bank data node
+                const bankDataNode = nodes.find(d => d.data.name === "Get bank data");
+                
+                if (bankDataNode) {
+                    const scale = 4;
+                    const x = width / 2 - (bankDataNode.x + 50) * scale;
+                    const y = height / 2 - (bankDataNode.y + 50) * scale;
+                    
+                    svg.transition().duration(750).ease(d3.easeCubicInOut)
+                        .call(zoom.transform, d3.zoomIdentity.translate(x, y).scale(scale));
+                }
+                
+                // Show only Get bank data and its children
+                node.transition().duration(500).ease(d3.easeCubicInOut)
+                    .style('opacity', d => {
+                        if (d.data.name === "Get bank data") return 1;
+                        if (d.parent && d.parent.data.name === "Get bank data") return 1;
+                        return 0.03;
+                    })
+                    .attr('pointer-events', d => {
+                        if (d.data.name === "Get bank data") return 'all';
+                        if (d.parent && d.parent.data.name === "Get bank data") return 'all';
+                        return 'none';
+                    });
+                
+                node.selectAll('circle').transition().duration(500).ease(d3.easeCubicInOut)
+                    .style('opacity', function() {
+                        const d = d3.select(this.parentNode).datum();
+                        if (d.data.name === "Get bank data") return 0.95;
+                        if (d.parent && d.parent.data.name === "Get bank data") return 1;
+                        return 0.02;
+                    })
+                    .attr('stroke-width', function() {
+                        const d = d3.select(this.parentNode).datum();
+                        if (d.data.name === "Get bank data") return 5;
+                        if (d.parent && d.parent.data.name === "Get bank data") return 3;
+                        return 1;
+                    })
+                    .style('filter', function() {
+                        const d = d3.select(this.parentNode).datum();
+                        if (d.parent && d.parent.data.name === "Get bank data") {
+                            return 'drop-shadow(0 0 10px rgba(91, 141, 238, 0.6))';
+                        }
+                        return d.depth > 0 ? 'drop-shadow(0 4px 12px rgba(0,0,0,0.3))' : 'none';
+                    });
+                
+                g.selectAll('.flow-arrow, .arrow-head').transition().duration(500).ease(d3.easeCubicInOut)
+                    .style('opacity', 0);
+                
+                // Add value prop annotations on the left
+                g.selectAll('.bankdata-annotation').remove();
+                
+                if (bankDataNode) {
+                    const annotationX = bankDataNode.x + 50 - bankDataNode.r - 25;
+                    const annotationY = bankDataNode.y + 50;
+                    
+                    const annotationGroup = g.append('g')
+                        .attr('class', 'bankdata-annotation')
+                        .attr('transform', `translate(${annotationX}, ${annotationY})`)
+                        .style('opacity', 0);
+                    
+                    // Background box
+                    annotationGroup.append('rect')
+                        .attr('x', -68)
+                        .attr('y', -28)
+                        .attr('width', 65)
+                        .attr('height', 56)
+                        .attr('rx', 3)
+                        .attr('fill', 'rgba(0,0,0,0.85)')
+                        .attr('stroke', 'rgba(102, 126, 234, 0.7)')
+                        .attr('stroke-width', 0.5);
+                    
+                    // Title
+                    annotationGroup.append('text')
+                        .attr('x', -35)
+                        .attr('y', -18)
+                        .attr('text-anchor', 'middle')
+                        .attr('fill', '#667eea')
+                        .attr('font-size', '4px')
+                        .attr('font-weight', 'bold')
+                        .text('OWN YOUR CONNECTIVITY');
+                    
+                    // Bullet points
+                    const bullets = [
+                        '• Connect & control',
+                        '• Format library',
+                        '• Volume management',
+                        '• Quality of Service'
+                    ];
+                    
+                    bullets.forEach((text, i) => {
+                        annotationGroup.append('text')
+                            .attr('x', -65)
+                            .attr('y', -6 + i * 7)
+                            .attr('fill', '#4facfe')
+                            .attr('font-size', '3.5px')
+                            .attr('font-weight', '500')
+                            .text(text);
+                    });
+                    
+                    // Arrow pointing to bubble
+                    annotationGroup.append('line')
+                        .attr('x1', -3)
+                        .attr('y1', 0)
+                        .attr('x2', 12)
+                        .attr('y2', 0)
+                        .attr('stroke', 'rgba(102, 126, 234, 0.8)')
+                        .attr('stroke-width', 0.5)
+                        .attr('stroke-dasharray', '2,1');
+                    
+                    annotationGroup.append('polygon')
+                        .attr('points', '12,0 9,-2 9,2')
+                        .attr('fill', 'rgba(102, 126, 234, 0.8)');
+                    
+                    annotationGroup.transition().duration(600).delay(400)
+                        .style('opacity', 1);
+                }
+                
+                return;
+            }
+            
+            // Remove annotations when leaving bankdata level
+            g.selectAll('.bankdata-annotation').remove();
+            
+            // Handle Aggregate Forecast zoom (3.2)
+            if (level === 'aggregate') {
+                const aggregateNode = nodes.find(d => d.data.name === "Aggregate Forecast");
+                
+                if (aggregateNode) {
+                    const scale = 3.5;
+                    const x = width / 2 - (aggregateNode.x + 50) * scale;
+                    const y = height / 2 - (aggregateNode.y + 50) * scale;
+                    
+                    svg.transition().duration(750).ease(d3.easeCubicInOut)
+                        .call(zoom.transform, d3.zoomIdentity.translate(x, y).scale(scale));
+                }
+                
+                node.transition().duration(500).ease(d3.easeCubicInOut)
+                    .style('opacity', d => d.data.name === "Aggregate Forecast" ? 1 : 0.05);
+                
+                node.selectAll('circle').transition().duration(500).ease(d3.easeCubicInOut)
+                    .style('opacity', d => d.data.name === "Aggregate Forecast" ? 1 : 0.03)
+                    .attr('stroke-width', d => d.data.name === "Aggregate Forecast" ? 5 : 1);
+                
+                g.selectAll('.flow-arrow, .arrow-head').transition().duration(500).style('opacity', 0);
+                
+                // Add annotation for Aggregate Forecast
+                g.selectAll('.valueprop-annotation').remove();
+                if (aggregateNode) {
+                    const annotationX = aggregateNode.x + 50 - aggregateNode.r - 25;
+                    const annotationY = aggregateNode.y + 50;
+                    
+                    const annotationGroup = g.append('g')
+                        .attr('class', 'valueprop-annotation')
+                        .attr('transform', `translate(${annotationX}, ${annotationY})`)
+                        .style('opacity', 0);
+                    
+                    annotationGroup.append('rect')
+                        .attr('x', -75)
+                        .attr('y', -30)
+                        .attr('width', 70)
+                        .attr('height', 60)
+                        .attr('rx', 3)
+                        .attr('fill', 'rgba(0,0,0,0.85)')
+                        .attr('stroke', 'rgba(233, 30, 140, 0.7)')
+                        .attr('stroke-width', 0.5);
+                    
+                    annotationGroup.append('text')
+                        .attr('x', -40)
+                        .attr('y', -20)
+                        .attr('text-anchor', 'middle')
+                        .attr('fill', '#e91e8c')
+                        .attr('font-size', '4px')
+                        .attr('font-weight', 'bold')
+                        .text('RECONCILE & CONSOLIDATE');
+                    
+                    const bullets = [
+                        '• Tag cash flows',
+                        '• Assign categories',
+                        '• Group by entity',
+                        '• Present unified view'
+                    ];
+                    
+                    bullets.forEach((text, i) => {
+                        annotationGroup.append('text')
+                            .attr('x', -72)
+                            .attr('y', -10 + i * 7)
+                            .attr('fill', '#e91e8c')
+                            .attr('font-size', '3.5px')
+                            .attr('font-weight', '500')
+                            .text(text);
+                    });
+                    
+                    annotationGroup.append('line')
+                        .attr('x1', -3).attr('y1', 0).attr('x2', 12).attr('y2', 0)
+                        .attr('stroke', 'rgba(233, 30, 140, 0.8)')
+                        .attr('stroke-width', 0.5)
+                        .attr('stroke-dasharray', '2,1');
+                    
+                    annotationGroup.append('polygon')
+                        .attr('points', '12,0 9,-2 9,2')
+                        .attr('fill', 'rgba(233, 30, 140, 0.8)');
+                    
+                    annotationGroup.transition().duration(600).delay(400).style('opacity', 1);
+                }
+                
+                return;
+            }
+            
+            // Handle Derive data zoom (3.3)
+            if (level === 'derive') {
+                const deriveNode = nodes.find(d => d.data.name === "Derive data");
+                
+                if (deriveNode) {
+                    const scale = 4;
+                    const x = width / 2 - (deriveNode.x + 50) * scale;
+                    const y = height / 2 - (deriveNode.y + 50) * scale;
+                    
+                    svg.transition().duration(750).ease(d3.easeCubicInOut)
+                        .call(zoom.transform, d3.zoomIdentity.translate(x, y).scale(scale));
+                }
+                
+                node.transition().duration(500).ease(d3.easeCubicInOut)
+                    .style('opacity', d => d.data.name === "Derive data" ? 1 : 0.05);
+                
+                node.selectAll('circle').transition().duration(500).ease(d3.easeCubicInOut)
+                    .style('opacity', d => d.data.name === "Derive data" ? 1 : 0.03)
+                    .attr('stroke-width', d => d.data.name === "Derive data" ? 5 : 1);
+                
+                g.selectAll('.flow-arrow, .arrow-head').transition().duration(500).style('opacity', 0);
+                
+                // Add annotation for Derive data
+                g.selectAll('.valueprop-annotation').remove();
+                if (deriveNode) {
+                    const annotationX = deriveNode.x + 50 - deriveNode.r - 20;
+                    const annotationY = deriveNode.y + 50;
+                    
+                    const annotationGroup = g.append('g')
+                        .attr('class', 'valueprop-annotation')
+                        .attr('transform', `translate(${annotationX}, ${annotationY})`)
+                        .style('opacity', 0);
+                    
+                    annotationGroup.append('rect')
+                        .attr('x', -78)
+                        .attr('y', -30)
+                        .attr('width', 75)
+                        .attr('height', 60)
+                        .attr('rx', 3)
+                        .attr('fill', 'rgba(0,0,0,0.85)')
+                        .attr('stroke', 'rgba(79, 172, 254, 0.7)')
+                        .attr('stroke-width', 0.5);
+                    
+                    annotationGroup.append('text')
+                        .attr('x', -40)
+                        .attr('y', -20)
+                        .attr('text-anchor', 'middle')
+                        .attr('fill', '#4facfe')
+                        .attr('font-size', '4px')
+                        .attr('font-weight', 'bold')
+                        .text('ENRICH & EXTEND');
+                    
+                    const bullets = [
+                        '• Record interco moves',
+                        '• Calculate interest',
+                        '• Create GL entries',
+                        '• Extend CF horizon'
+                    ];
+                    
+                    bullets.forEach((text, i) => {
+                        annotationGroup.append('text')
+                            .attr('x', -75)
+                            .attr('y', -10 + i * 7)
+                            .attr('fill', '#4facfe')
+                            .attr('font-size', '3.5px')
+                            .attr('font-weight', '500')
+                            .text(text);
+                    });
+                    
+                    annotationGroup.append('line')
+                        .attr('x1', -3).attr('y1', 0).attr('x2', 12).attr('y2', 0)
+                        .attr('stroke', 'rgba(79, 172, 254, 0.8)')
+                        .attr('stroke-width', 0.5)
+                        .attr('stroke-dasharray', '2,1');
+                    
+                    annotationGroup.append('polygon')
+                        .attr('points', '12,0 9,-2 9,2')
+                        .attr('fill', 'rgba(79, 172, 254, 0.8)');
+                    
+                    annotationGroup.transition().duration(600).delay(400).style('opacity', 1);
+                }
+                
+                return;
+            }
+            
+            // Handle Execute zoom (3.4)
+            if (level === 'execute') {
+                const executeNode = nodes.find(d => d.data.name === "Execute");
+                
+                if (executeNode) {
+                    const scale = 3.5;
+                    const x = width / 2 - (executeNode.x + 50) * scale;
+                    const y = height / 2 - (executeNode.y + 50) * scale;
+                    
+                    svg.transition().duration(750).ease(d3.easeCubicInOut)
+                        .call(zoom.transform, d3.zoomIdentity.translate(x, y).scale(scale));
+                }
+                
+                node.transition().duration(500).ease(d3.easeCubicInOut)
+                    .style('opacity', d => d.data.name === "Execute" ? 1 : 0.05);
+                
+                node.selectAll('circle').transition().duration(500).ease(d3.easeCubicInOut)
+                    .style('opacity', d => d.data.name === "Execute" ? 1 : 0.03)
+                    .attr('stroke-width', d => d.data.name === "Execute" ? 5 : 1);
+                
+                g.selectAll('.flow-arrow, .arrow-head').transition().duration(500).style('opacity', 0);
+                
+                // Add annotation for Execute
+                g.selectAll('.valueprop-annotation').remove();
+                if (executeNode) {
+                    const annotationX = executeNode.x + 50 - executeNode.r - 25;
+                    const annotationY = executeNode.y + 50;
+                    
+                    const annotationGroup = g.append('g')
+                        .attr('class', 'valueprop-annotation')
+                        .attr('transform', `translate(${annotationX}, ${annotationY})`)
+                        .style('opacity', 0);
+                    
+                    annotationGroup.append('rect')
+                        .attr('x', -82)
+                        .attr('y', -32)
+                        .attr('width', 78)
+                        .attr('height', 65)
+                        .attr('rx', 3)
+                        .attr('fill', 'rgba(0,0,0,0.85)')
+                        .attr('stroke', 'rgba(245, 197, 24, 0.7)')
+                        .attr('stroke-width', 0.5);
+                    
+                    annotationGroup.append('text')
+                        .attr('x', -43)
+                        .attr('y', -22)
+                        .attr('text-anchor', 'middle')
+                        .attr('fill', '#f5c518')
+                        .attr('font-size', '4px')
+                        .attr('font-weight', 'bold')
+                        .text('ACT & EXPORT');
+                    
+                    const bullets = [
+                        '• Positions → Payments',
+                        '• Balances → Exposures',
+                        '• GL/Forecast → ERP',
+                        '• Statements → Archive'
+                    ];
+                    
+                    bullets.forEach((text, i) => {
+                        annotationGroup.append('text')
+                            .attr('x', -79)
+                            .attr('y', -10 + i * 7)
+                            .attr('fill', '#f5c518')
+                            .attr('font-size', '3.5px')
+                            .attr('font-weight', '500')
+                            .text(text);
+                    });
+                    
+                    annotationGroup.append('line')
+                        .attr('x1', -3).attr('y1', 0).attr('x2', 12).attr('y2', 0)
+                        .attr('stroke', 'rgba(245, 197, 24, 0.8)')
+                        .attr('stroke-width', 0.5)
+                        .attr('stroke-dasharray', '2,1');
+                    
+                    annotationGroup.append('polygon')
+                        .attr('points', '12,0 9,-2 9,2')
+                        .attr('fill', 'rgba(245, 197, 24, 0.8)');
+                    
+                    annotationGroup.transition().duration(600).delay(400).style('opacity', 1);
+                }
+                
+                return;
+            }
+            
+            // Remove value prop annotations when changing levels
+            g.selectAll('.valueprop-annotation').remove();
+            
+            // Reset zoom for non-liquidity levels
+            if (level !== 'liquidity' && level !== 'bankdata' && level !== 'aggregate' && level !== 'derive' && level !== 'execute') {
+                svg.transition().duration(750).ease(d3.easeCubicInOut)
+                    .call(zoom.transform, d3.zoomIdentity);
+            }
+            
+            const targetDepth = level === '1' ? 0 : level === '2' ? 1 : level === '3' ? 2 : -1;
+            
+            node.transition().duration(500).ease(d3.easeCubicInOut)
+                .style('opacity', d => {
+                    if (level === 'all') return d.depth === 0 ? 0.3 : 1;
+                    return d.depth === targetDepth ? 1 : 0.12;
+                })
+                .attr('pointer-events', d => {
+                    if (level === 'all') return 'all';
+                    return d.depth === targetDepth ? 'all' : 'none';
+                });
+            
+            node.selectAll('circle').transition().duration(500).ease(d3.easeCubicInOut)
+                .style('opacity', function() {
+                    const d = d3.select(this.parentNode).datum();
+                    if (level === 'all') return d.depth === 0 ? 0.3 : 0.9;
+                    return d.depth === targetDepth ? 0.95 : 0.08;
+                })
+                .attr('stroke-width', function() {
+                    const d = d3.select(this.parentNode).datum();
+                    if (level === 'all') {
+                        if (d.depth === 0) return 8;
+                        if (d.depth === 1) return 5;
+                        return 2;
+                    }
+                    if (d.depth === targetDepth) {
+                        if (d.depth === 0) return 10;
+                        if (d.depth === 1) return 7;
+                        return 3;
+                    }
+                    return 1;
+                })
+                .style('filter', function() {
+                    const d = d3.select(this.parentNode).datum();
+                    return d.depth > 0 ? 'drop-shadow(0 4px 12px rgba(0,0,0,0.3))' : 'none';
+                });
+            
+            g.selectAll('.flow-arrow, .arrow-head').transition().duration(500).ease(d3.easeCubicInOut)
+                .style('opacity', level === 'all' || level === '3' ? 0.4 : 0.05);
+        }
+        
+        d3.selectAll('.level-button').on('click', function() {
+            const level = d3.select(this).attr('data-level');
+            updateLevelFilter(level);
+        });
+        
+        d3.select('[data-level="all"]').classed('active', true);
+        
+        // Tab switching logic
+        document.querySelectorAll('.main-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const tabId = this.getAttribute('data-tab');
+                
+                // Update tab styles
+                document.querySelectorAll('.main-tab').forEach(t => {
+                    if (t.getAttribute('data-tab') === tabId) {
+                        t.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                        t.style.border = '2px solid white';
+                        t.classList.add('active');
+                    } else {
+                        t.style.background = 'rgba(255, 255, 255, 0.15)';
+                        t.style.border = '2px solid rgba(255, 255, 255, 0.3)';
+                        t.style.borderLeft = t.getAttribute('data-tab') === 'archeology' ? 'none' : '2px solid rgba(255, 255, 255, 0.3)';
+                        t.classList.remove('active');
+                    }
+                });
+                
+                // Show/hide content
+                if (tabId === 'today') {
+                    document.getElementById('today-content').style.display = 'block';
+                    document.getElementById('archeology-content').style.display = 'none';
+                    document.getElementById('bubble-container').style.display = 'block';
+                    document.getElementById('archeology-view').style.display = 'none';
+                    document.getElementById('future-view').style.display = 'none';
+                } else if (tabId === 'archeology') {
+                    document.getElementById('today-content').style.display = 'none';
+                    document.getElementById('archeology-content').style.display = 'block';
+                    document.getElementById('future-content').style.display = 'none';
+                    document.getElementById('bubble-container').style.display = 'none';
+                    document.getElementById('archeology-view').style.display = 'block';
+                    document.getElementById('future-view').style.display = 'none';
+                } else if (tabId === 'future') {
+                    document.getElementById('today-content').style.display = 'none';
+                    document.getElementById('archeology-content').style.display = 'none';
+                    document.getElementById('future-content').style.display = 'block';
+                    document.getElementById('bubble-container').style.display = 'none';
+                    document.getElementById('archeology-view').style.display = 'none';
+                    document.getElementById('future-view').style.display = 'block';
+                }
+                
+                // Update all tab styles
+                document.querySelectorAll('.main-tab').forEach(t => {
+                    const tTab = t.getAttribute('data-tab');
+                    if (tTab === tabId) {
+                        if (tTab === 'archeology') {
+                            t.style.background = 'linear-gradient(135deg, #f5c518 0%, #e91e8c 100%)';
+                            t.style.borderColor = '#f5c518';
+                        } else if (tTab === 'today') {
+                            t.style.background = 'linear-gradient(135deg, #f5c518 0%, #e91e8c 100%)';
+                            t.style.borderColor = '#f5c518';
+                        } else if (tTab === 'future') {
+                            t.style.background = 'linear-gradient(135deg, #e91e8c 0%, #c41e7f 100%)';
+                            t.style.borderColor = '#e91e8c';
+                        }
+                    } else {
+                        t.style.background = 'rgba(255, 255, 255, 0.1)';
+                        if (tTab === 'archeology') {
+                            t.style.borderColor = 'rgba(245, 197, 24, 0.3)';
+                        } else if (tTab === 'future') {
+                            t.style.borderColor = 'rgba(233, 30, 140, 0.3)';
+                        } else {
+                            t.style.borderColor = 'rgba(245, 197, 24, 0.3)';
+                        }
+                    }
+                });
+            });
+        });
+        
+        // Era circle click functionality
+        document.querySelectorAll('.era-circle').forEach(circle => {
+            circle.addEventListener('click', function() {
+                const era = this.getAttribute('data-era');
+                const content = document.querySelector(`.era-content[data-era="${era}"]`);
+                
+                // Toggle this era's content
+                if (content.style.display === 'none' || content.style.display === '') {
+                    content.style.display = 'block';
+                    setTimeout(() => {
+                        content.style.opacity = '1';
+                    }, 10);
+                    // Highlight the circle
+                    this.style.transform = 'scale(1.05)';
+                    this.style.boxShadow = '0 0 30px rgba(245, 197, 24, 0.5)';
+                } else {
+                    content.style.opacity = '0';
+                    setTimeout(() => {
+                        content.style.display = 'none';
+                    }, 500);
+                    // Remove highlight
+                    this.style.transform = 'scale(1)';
+                    this.style.boxShadow = 'none';
+                }
+            });
+            
+            // Hover effects
+            circle.addEventListener('mouseenter', function() {
+                if (this.style.transform !== 'scale(1.05)') {
+                    this.style.transform = 'scale(1.03)';
+                }
+            });
+            circle.addEventListener('mouseleave', function() {
+                if (this.style.boxShadow !== '0 0 30px rgba(245, 197, 24, 0.5)') {
+                    this.style.transform = 'scale(1)';
+                }
+            });
+        });
+        
+        // Toggle function for collapsible sections
+        function toggleSection(sectionId) {
+            const content = document.getElementById(sectionId);
+            const toggleId = sectionId.replace('-content', '-toggle');
+            const toggle = document.getElementById(toggleId);
+            
+            if (content.style.display === 'none' || content.style.display === '') {
+                content.style.display = 'block';
+                if (toggle) toggle.textContent = '▼';
+            } else {
+                content.style.display = 'none';
+                if (toggle) toggle.textContent = '▶';
+            }
+        }
+    </script>
+</body>
+</html>
