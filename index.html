@@ -296,7 +296,7 @@ a.card-pink:hover{border-color:#e91e8c;box-shadow:0 0 20px rgba(233,30,140,0.2)}
 </svg>
 </div>
 
-<button class="sp-btn" id="org-btn" onclick="orgTransform()" style="margin-top:12px">See it differently</button>
+<button class="sp-btn" id="org-btn" onclick="orgTransform()" style="margin-top:20px">But what if...</button>
 </div>
 <div class="quote">The bottleneck shifts from "how many devs do we have" to "how many domain experts are willing to build."<br><span style="font-style:normal;font-size:13px;color:rgba(255,255,255,0.4)">Kyriba has 25 years of treasury expertise sitting in the org. That's the real asset.</span></div>
 </div>
@@ -752,7 +752,7 @@ function orgTransform(){
       constellation.style.opacity='1';
     },500);
     sub.textContent='One builder at the center. Everyone else in orbit.';
-    btn.textContent='Back to table';
+    btn.textContent='Back';
     orgState='constellation';
   } else {
     constellation.style.opacity='0';
@@ -762,7 +762,7 @@ function orgTransform(){
       setTimeout(()=>{table.style.opacity='1'},50);
     },500);
     sub.textContent='If AI builds and the code is the spec, every role in the chain shifts.';
-    btn.textContent='See it differently';
+    btn.textContent='But what if...';
     orgState='table';
   }
 }
