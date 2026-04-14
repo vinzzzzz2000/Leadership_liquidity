@@ -201,59 +201,72 @@ a.card-pink:hover{border-color:#e91e8c;box-shadow:0 0 20px rgba(233,30,140,0.2)}
 <div class="s-num">5 / 10</div>
 <div class="s-title">Rethink <span class="hl">the org chart</span></div>
 <div class="s-sub" id="org-sub">If AI builds and the code is the spec, every role in the chain shifts.</div>
-<div style="max-width:800px;position:relative;height:340px" id="org-stage">
+<div style="max-width:800px;position:relative;min-height:340px" id="org-stage">
 
-<svg viewBox="0 0 700 320" width="100%" id="org-svg" style="position:absolute;top:0;left:0">
+<!-- TABLE STATE -->
+<div id="org-table" style="transition:opacity 0.5s">
+<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:0;margin-bottom:20px">
+<div style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.3);text-align:center;padding:8px">Was</div>
+<div style="width:1px"></div>
+<div style="font-size:12px;font-weight:700;color:#e91e8c;text-align:center;padding:8px">Becomes</div>
+</div>
+<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:0">
+<div class="card" style="border-radius:8px 0 0 0;padding:14px">
+<div class="card-t" style="font-size:13px">Domain experts</div>
+<div class="card-s" style="font-size:12px">Write specs. Throw over the wall.</div>
+</div>
+<div style="width:1px;background:rgba(255,255,255,0.08)"></div>
+<div class="card card-pink" style="border-radius:0 8px 0 0;padding:14px">
+<div class="card-t" style="font-size:13px;color:#e91e8c">Domain experts</div>
+<div class="card-s" style="font-size:12px">Become builders. Prototype directly with AI. Treasury knowledge = competitive advantage.</div>
+</div>
 
-<!-- TABLE STATE: rows, all visible initially -->
-<g id="org-table">
-<!-- Headers -->
-<text x="175" y="22" text-anchor="middle" style="font-size:11px;font-weight:700;fill:rgba(255,255,255,0.3)">Role</text>
-<text x="500" y="22" text-anchor="middle" style="font-size:11px;font-weight:700;fill:rgba(255,255,255,0.3)">What they do</text>
+<div class="card" style="border-radius:0;padding:14px">
+<div class="card-t" style="font-size:13px">Developers</div>
+<div class="card-s" style="font-size:12px">Write code from specs. Build features end to end.</div>
+</div>
+<div style="width:1px;background:rgba(255,255,255,0.08)"></div>
+<div class="card card-pink" style="border-radius:0;padding:14px">
+<div class="card-t" style="font-size:13px;color:#e91e8c">Developers</div>
+<div class="card-s" style="font-size:12px">Split time: monolith maintenance + code review/validation of new AI-built features. They don't build from scratch — they make it enterprise-grade.</div>
+</div>
 
-<!-- Row 1: Domain expert -->
-<rect x="40" y="34" width="270" height="48" rx="6" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" stroke-width="1" class="org-row" data-row="0"/>
-<text x="175" y="62" text-anchor="middle" style="font-size:13px;font-weight:500;fill:rgba(255,255,255,0.7)" class="org-row" data-row="0">Domain expert</text>
-<rect x="330" y="34" width="340" height="48" rx="6" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" stroke-width="1" class="org-row" data-row="0"/>
-<text x="500" y="56" text-anchor="middle" style="font-size:12px;fill:rgba(255,255,255,0.5)" class="org-row" data-row="0">Writes specs. Throws over the wall.</text>
-<text x="500" y="72" text-anchor="middle" style="font-size:12px;fill:rgba(255,255,255,0.5)" class="org-row" data-row="0">Waits 3 years. Gets something different.</text>
+<div class="card" style="border-radius:0;padding:14px">
+<div class="card-t" style="font-size:13px">Product managers</div>
+<div class="card-s" style="font-size:12px">Author 40-page PRDs. Manage the backlog.</div>
+</div>
+<div style="width:1px;background:rgba(255,255,255,0.08)"></div>
+<div class="card card-pink" style="border-radius:0;padding:14px">
+<div class="card-t" style="font-size:13px;color:#e91e8c">Product managers</div>
+<div class="card-s" style="font-size:12px">Curate and evaluate. Does the prototype solve the problem? Is it worth scaling?</div>
+</div>
 
-<!-- Row 2: Developers -->
-<rect x="40" y="92" width="270" height="48" rx="6" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" stroke-width="1" class="org-row" data-row="1"/>
-<text x="175" y="120" text-anchor="middle" style="font-size:13px;font-weight:500;fill:rgba(255,255,255,0.7)" class="org-row" data-row="1">Developers</text>
-<rect x="330" y="92" width="340" height="48" rx="6" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" stroke-width="1" class="org-row" data-row="1"/>
-<text x="500" y="120" text-anchor="middle" style="font-size:12px;fill:rgba(255,255,255,0.5)" class="org-row" data-row="1">Build from specs. End to end. Slow.</text>
-
-<!-- Row 3: PMs -->
-<rect x="40" y="150" width="270" height="48" rx="6" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" stroke-width="1" class="org-row" data-row="2"/>
-<text x="175" y="178" text-anchor="middle" style="font-size:13px;font-weight:500;fill:rgba(255,255,255,0.7)" class="org-row" data-row="2">Product managers</text>
-<rect x="330" y="150" width="340" height="48" rx="6" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" stroke-width="1" class="org-row" data-row="2"/>
-<text x="500" y="178" text-anchor="middle" style="font-size:12px;fill:rgba(255,255,255,0.5)" class="org-row" data-row="2">40-page PRDs. Backlog management.</text>
-
-<!-- Row 4: QA -->
-<rect x="40" y="208" width="270" height="48" rx="6" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" stroke-width="1" class="org-row" data-row="3"/>
-<text x="175" y="236" text-anchor="middle" style="font-size:13px;font-weight:500;fill:rgba(255,255,255,0.7)" class="org-row" data-row="3">QA</text>
-<rect x="330" y="208" width="340" height="48" rx="6" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" stroke-width="1" class="org-row" data-row="3"/>
-<text x="500" y="236" text-anchor="middle" style="font-size:12px;fill:rgba(255,255,255,0.5)" class="org-row" data-row="3">Tests at the end. Sequential.</text>
-
-<!-- Equal signs between rows -->
-<text x="15" y="62" style="font-size:14px;fill:rgba(255,255,255,0.15)" class="org-row" data-row="0">=</text>
-<text x="15" y="120" style="font-size:14px;fill:rgba(255,255,255,0.15)" class="org-row" data-row="1">=</text>
-<text x="15" y="178" style="font-size:14px;fill:rgba(255,255,255,0.15)" class="org-row" data-row="2">=</text>
-<text x="15" y="236" style="font-size:14px;fill:rgba(255,255,255,0.15)" class="org-row" data-row="3">=</text>
-
-<text x="350" y="290" text-anchor="middle" style="font-size:12px;fill:rgba(255,255,255,0.2)" id="org-old-label">Everyone is equal. Everyone is slow.</text>
-</g>
+<div class="card" style="border-radius:0 0 0 8px;padding:14px">
+<div class="card-t" style="font-size:13px">QA</div>
+<div class="card-s" style="font-size:12px">Test at the end. Sequential. Slow.</div>
+</div>
+<div style="width:1px;background:rgba(255,255,255,0.08)"></div>
+<div class="card card-pink" style="border-radius:0 0 8px 0;padding:14px">
+<div class="card-t" style="font-size:13px;color:#e91e8c">QA — or builders</div>
+<div class="card-s" style="font-size:12px">Continuous validation from day one. And for the brave ones: pick up AI tools and become builders themselves. The door is open.</div>
+</div>
+</div>
+</div>
 
 <!-- CONSTELLATION STATE: hidden initially -->
-<g id="org-constellation" style="opacity:0">
-<!-- Domain expert: CENTER, large, glowing -->
-<circle cx="350" cy="150" r="52" fill="rgba(233,30,140,0.08)" stroke="#e91e8c" stroke-width="2" id="org-center"/>
+<div id="org-constellation" style="opacity:0;position:absolute;top:0;left:0;width:100%;pointer-events:none;transition:opacity 0.8s cubic-bezier(0.16,1,0.3,1)">
+<svg viewBox="0 0 700 320" width="100%">
+<!-- Orbit ring -->
+<circle cx="350" cy="150" r="120" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1" stroke-dasharray="4 4"/>
+
+<!-- Domain expert: CENTER -->
+<circle cx="350" cy="150" r="52" fill="rgba(233,30,140,0.08)" stroke="#e91e8c" stroke-width="2"/>
 <text x="350" y="143" text-anchor="middle" style="font-size:15px;font-weight:700;fill:#e91e8c">Domain expert</text>
 <text x="350" y="162" text-anchor="middle" style="font-size:11px;fill:rgba(233,30,140,0.6)">The solo builder</text>
 
-<!-- Orbit ring -->
-<circle cx="350" cy="150" r="120" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1" stroke-dasharray="4 4"/>
+<!-- AI tools badge -->
+<rect x="312" y="192" width="76" height="20" rx="10" fill="rgba(233,30,140,0.15)" stroke="#e91e8c" stroke-width="0.5"/>
+<text x="350" y="206" text-anchor="middle" style="font-size:10px;font-weight:500;fill:#e91e8c">+ AI agents</text>
 
 <!-- Developers: orbit top-right -->
 <line x1="392" y1="112" x2="435" y2="62" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
@@ -279,17 +292,13 @@ a.card-pink:hover{border-color:#e91e8c;box-shadow:0 0 20px rgba(233,30,140,0.2)}
 <text x="495" y="256" text-anchor="middle" style="font-size:11px;font-weight:500;fill:rgba(255,255,255,0.5)">Monolith</text>
 <text x="495" y="270" text-anchor="middle" style="font-size:9px;fill:rgba(255,255,255,0.3)">Devs maintain</text>
 
-<!-- AI tools badge -->
-<rect x="312" y="192" width="76" height="20" rx="10" fill="rgba(233,30,140,0.15)" stroke="#e91e8c" stroke-width="0.5"/>
-<text x="350" y="206" text-anchor="middle" style="font-size:10px;font-weight:500;fill:#e91e8c">+ AI agents</text>
-
 <text x="350" y="315" text-anchor="middle" style="font-size:12px;fill:rgba(233,30,140,0.5)">One person rodeo. Everyone else in orbit.</text>
-</g>
 </svg>
-
-<button class="sp-btn" id="org-btn" onclick="orgTransform()" style="position:absolute;bottom:0;left:50%;transform:translateX(-50%)">Transform</button>
 </div>
-<div class="quote" id="org-quote">The bottleneck shifts from "how many devs do we have" to "how many domain experts are willing to build."<br><span style="font-style:normal;font-size:13px;color:rgba(255,255,255,0.4)">Kyriba has 25 years of treasury expertise sitting in the org. That's the real asset.</span></div>
+
+<button class="sp-btn" id="org-btn" onclick="orgTransform()" style="margin-top:12px">See it differently</button>
+</div>
+<div class="quote">The bottleneck shifts from "how many devs do we have" to "how many domain experts are willing to build."<br><span style="font-style:normal;font-size:13px;color:rgba(255,255,255,0.4)">Kyriba has 25 years of treasury expertise sitting in the org. That's the real asset.</span></div>
 </div>
 
 <!-- SLIDE 5: K-Phi -->
@@ -736,67 +745,24 @@ function orgTransform(){
   const sub=document.getElementById('org-sub');
 
   if(orgState==='table'){
-    // Table → Constellation
-    // Fade out rows one by one from bottom
-    const rows=document.querySelectorAll('.org-row');
-    const maxRow=3;
-    for(let r=maxRow;r>=0;r--){
-      const els=[...rows].filter(e=>e.dataset.row==String(r));
-      const delay=(maxRow-r)*150;
-      els.forEach(e=>{
-        e.style.transition=`opacity 0.4s ease ${delay}ms, transform 0.4s ease ${delay}ms`;
-        e.style.opacity='0';
-        e.style.transform='translateY(-10px)';
-      });
-    }
-    const oldLabel=document.getElementById('org-old-label');
-    oldLabel.style.transition='opacity 0.3s';
-    oldLabel.style.opacity='0';
-
-    // After rows fade, bring in constellation
+    table.style.opacity='0';
     setTimeout(()=>{
-      table.style.transition='opacity 0.3s';
-      table.style.opacity='0';
-
-      setTimeout(()=>{
-        constellation.style.transition='opacity 0.8s cubic-bezier(0.16,1,0.3,1)';
-        constellation.style.opacity='1';
-
-        // Pulse the center
-        const center=document.getElementById('org-center');
-        center.style.transition='r 0.6s cubic-bezier(0.16,1,0.3,1), filter 0.6s';
-        center.setAttribute('r','56');
-        setTimeout(()=>center.setAttribute('r','52'),600);
-      },200);
-    },700);
-
+      table.style.display='none';
+      constellation.style.pointerEvents='auto';
+      constellation.style.opacity='1';
+    },500);
     sub.textContent='One builder at the center. Everyone else in orbit.';
     btn.textContent='Back to table';
     orgState='constellation';
-
   } else {
-    // Constellation → Table
-    constellation.style.transition='opacity 0.4s';
     constellation.style.opacity='0';
-
+    constellation.style.pointerEvents='none';
     setTimeout(()=>{
-      table.style.transition='opacity 0.3s';
-      table.style.opacity='1';
-
-      const rows=document.querySelectorAll('.org-row');
-      rows.forEach((e,i)=>{
-        const delay=i*80;
-        e.style.transition=`opacity 0.4s ease ${delay}ms, transform 0.4s ease ${delay}ms`;
-        e.style.opacity='1';
-        e.style.transform='translateY(0)';
-      });
-      const oldLabel=document.getElementById('org-old-label');
-      oldLabel.style.transition='opacity 0.4s ease 0.4s';
-      oldLabel.style.opacity='1';
-    },400);
-
+      table.style.display='';
+      setTimeout(()=>{table.style.opacity='1'},50);
+    },500);
     sub.textContent='If AI builds and the code is the spec, every role in the chain shifts.';
-    btn.textContent='Transform';
+    btn.textContent='See it differently';
     orgState='table';
   }
 }
